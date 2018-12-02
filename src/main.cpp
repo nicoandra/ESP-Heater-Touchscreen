@@ -191,7 +191,59 @@ void setup() {
 }
 
 
+
+static void calibratePoint(uint16_t x, uint16_t y, uint16_t &vi, uint16_t &vj) {
+  // Draw cross
+
+
+  tft.drawFastHLine(x - 8, y, 16,0xff);
+  tft.drawFastVLine(x, y - 8, 16,0xff);
+  while (!touch.isTouching()) {
+    delay(10);
+  }
+  touch.getRaw(vi, vj);
+  // Erase by overwriting with black
+  tft.drawFastHLine(x - 8, y, 16, 0);
+  tft.drawFastVLine(x, y - 8, 16, 0);
+}
+
+void calibrate() {
+  uint16_t x1, y1, x2, y2;
+  uint16_t vi1, vj1, vi2, vj2;
+  touch.getCalibrationPoints(x1, y1, x2, y2);
+  calibratePoint(x1, y1, vi1, vj1);
+  delay(1000);
+  calibratePoint(x2, y2, vi2, vj2);
+  touch.setCalibration(vi1, vj1, vi2, vj2);
+
+
+  tft.setTextColor(ILI9341_CYAN);
+  tft.setTextSize(2);
+  tft.println("Calibration Params");
+  tft.println("");
+  tft.setTextSize(3);
+  tft.println(vi1);
+  tft.println(vj1);
+  tft.println(vi2);
+  tft.println(vj2);
+}
+
+
 void loop() {
+
+  if (false) {
+    tft.fillScreen(ILI9341_BLACK);
+    calibrate();  // No rotation!!
+    while(true){
+      delay(1000);
+    }
+    return ;
+  }
+
+  // touch.setCalibration(159, 1696, 1776, 221);
+  touch.setCalibration(282, 1696, 1672, 305);
+  // touch.setCalibration(186, 1712, 1760, 321);
+
   mqttClient.loop();
 
   if (!mqttClient.connected()) {
@@ -207,19 +259,45 @@ void loop() {
     Serial.println(y); */
 
     if(buttonA.contains(x, y)){
+        buttonC.press(true);
+        buttonA.drawButton(true);
         Serial.println("Temp++");
+        delay(25);
+        buttonA.drawButton(false);
+        buttonA.press(false);
+
     }
 
     if(buttonB.contains(x, y)){
+        buttonB.drawButton(true);
         Serial.println("Temp--");
+        buttonB.press(true);
+        delay(25);
+        buttonB.drawButton(false);
+        buttonB.press(false);
     }
 
     if(buttonC.contains(x, y)){
+        buttonC.drawButton(true);
         Serial.println("On/Off");
+        buttonC.press(true);
+        delay(25);
+        buttonC.drawButton(false);
+        buttonC.press(false);
     }
 
     if(buttonD.contains(x, y)){
+        buttonD.drawButton(true);
         Serial.println("Global On/Off");
+        buttonD.press(true);
+        delay(25);
+        buttonD.drawButton(false);
+        buttonD.press(false);
+    } else {
+      buttonA.press(false);
+      buttonB.press(false);
+      buttonC.press(false);
+      buttonD.press(false);
     }
   }
 
