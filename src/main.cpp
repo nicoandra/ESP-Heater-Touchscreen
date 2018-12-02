@@ -132,8 +132,8 @@ void mqttMesageReceived(String &topic, String &payload) {
 }
 
 void mqttConnect() {
-  // mqttClient.begin("192.168.1.106", 1883, wifiClient);
-  mqttClient.begin("192.168.1.250", 1883, wifiClient);
+  mqttClient.begin("192.168.1.106", 1883, wifiClient);
+  // mqttClient.begin("192.168.1.250", 1883, wifiClient);
   Serial.print("Connecting to MQTT...");
   displayMqttConnect();
   while (!mqttClient.connect("arduino", "try", "try")) {
@@ -296,7 +296,7 @@ void loop() {
     if(buttonC.contains(x, y)){
         buttonC.drawButton(true);
         Serial.println("On/Off");
-        mqttClient.publish("/Screen01/Lights/On", "OnOff");
+        mqttClient.publish("/Screen01/Lights/Single/OnOff", "OnOff");
         buttonC.press(true);
         delay(25);
         buttonC.drawButton(false);
@@ -306,7 +306,7 @@ void loop() {
     if(buttonD.contains(x, y)){
         buttonD.drawButton(true);
         Serial.println("Global On/Off");
-        mqttClient.publish("/Screen01/Lights/Off", "OnOff");
+        mqttClient.publish("/Screen01/Lights/Global/OnOff", "OnOff");
         buttonD.press(true);
         delay(25);
         buttonD.drawButton(false);
