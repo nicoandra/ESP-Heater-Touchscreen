@@ -11,6 +11,7 @@
 #include <DNSServer.h>
 #include <ESP8266WebServer.h>
 #include <WiFiManager.h>
+#include <XPT2046.h>
 
 
 /** MQTT */
@@ -36,6 +37,8 @@ Adafruit_GFX_Button buttonB;
 Adafruit_GFX_Button buttonC;
 Adafruit_GFX_Button buttonD;
 
+
+XPT2046 touch(/*cs=*/ /* 4 */ D2, /*irq=*/ D1);
 
 /* Wifi Setup */
 WiFiManager wifiManager;
@@ -165,11 +168,11 @@ void displayWaitingForWifi(){
 void setup() {
   Serial.begin(115200);
   SPI.setFrequency(ESP_SPI_FREQ);
+  touch.begin(tft.width(), tft.height());  // Must be done before setting rotation
 
   tft.begin();
 
   Serial.print("tftx ="); Serial.print(tft.width()); Serial.print(" tfty ="); Serial.println(tft.height());
-
 
   displayWaitingForWifi();
 
@@ -194,5 +197,31 @@ void loop() {
   if (!mqttClient.connected()) {
     mqttConnect();
   }
+
+  uint16_t x, y;
+  if (touch.isTouching()) {
+    touch.getPosition(x, y);
+    /* Serial.print("x: ");
+    Serial.print(x);
+    Serial.print(" - y: ");
+    Serial.println(y); */
+
+    if(buttonA.contains(x, y)){
+        Serial.println("Temp++");
+    }
+
+    if(buttonB.contains(x, y)){
+        Serial.println("Temp--");
+    }
+
+    if(buttonC.contains(x, y)){
+        Serial.println("On/Off");
+    }
+
+    if(buttonD.contains(x, y)){
+        Serial.println("Global On/Off");
+    }
+  }
+
 
 }
