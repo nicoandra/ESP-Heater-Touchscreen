@@ -132,7 +132,8 @@ void mqttMesageReceived(String &topic, String &payload) {
 }
 
 void mqttConnect() {
-  mqttClient.begin("192.168.1.106", 1883, wifiClient);
+  // mqttClient.begin("192.168.1.106", 1883, wifiClient);
+  mqttClient.begin("192.168.1.250", 1883, wifiClient);
   Serial.print("Connecting to MQTT...");
   displayMqttConnect();
   while (!mqttClient.connect("arduino", "try", "try")) {
