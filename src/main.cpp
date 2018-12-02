@@ -47,6 +47,7 @@ WiFiClient wifiClient;
 
 String SensorTemp[4];
 String SensorState[4];
+String DesiredTemperature;
 
 static uint16_t prev_x = 0xffff, prev_y = 0xffff;
 
@@ -72,6 +73,13 @@ void displayStates(){
     }
     tft.print(Sensor02String);
 
+    tft.setCursor(130, 55); tft.setTextSize(4);
+    if (SensorState[1] == "ON" || SensorState[0] == "ON") {
+      tft.setTextColor(ILI9341_GREEN);
+    } else {
+      tft.setTextColor(ILI9341_WHITE);
+    }
+    tft.print(DesiredTemperature);
 }
 
 void displayMqttConnect(){
@@ -94,6 +102,7 @@ void mqttSubscriptions(){
   mqttClient.subscribe("/ThermoDev/Sensor01/CurrentTemperature");
   mqttClient.subscribe("/ThermoDev/Sensor02/CurrentState");
   mqttClient.subscribe("/ThermoDev/Sensor02/CurrentTemperature");
+  mqttClient.subscribe("/Home/Climate/DesiredTemperature");
 }
 
 void mqttMesageReceived(String &topic, String &payload) {
@@ -113,6 +122,10 @@ void mqttMesageReceived(String &topic, String &payload) {
 
   if (topic == "/ThermoDev/Sensor02/CurrentState") {
     SensorState[1] = payload;
+  }
+
+  if (topic == "/Home/Climate/DesiredTemperature") {
+    DesiredTemperature = payload;
   }
 
   displayStates();
@@ -262,6 +275,7 @@ void loop() {
         buttonC.press(true);
         buttonA.drawButton(true);
         Serial.println("Temp++");
+        mqttClient.publish("/Screen01/Climate/DesiredTemperatureButton", "++");
         delay(25);
         buttonA.drawButton(false);
         buttonA.press(false);
@@ -271,6 +285,7 @@ void loop() {
     if(buttonB.contains(x, y)){
         buttonB.drawButton(true);
         Serial.println("Temp--");
+        mqttClient.publish("/Screen01/Climate/DesiredTemperatureButton", "--");
         buttonB.press(true);
         delay(25);
         buttonB.drawButton(false);
@@ -280,6 +295,7 @@ void loop() {
     if(buttonC.contains(x, y)){
         buttonC.drawButton(true);
         Serial.println("On/Off");
+        mqttClient.publish("/Screen01/Lights/On", "OnOff");
         buttonC.press(true);
         delay(25);
         buttonC.drawButton(false);
@@ -289,6 +305,7 @@ void loop() {
     if(buttonD.contains(x, y)){
         buttonD.drawButton(true);
         Serial.println("Global On/Off");
+        mqttClient.publish("/Screen01/Lights/Off", "OnOff");
         buttonD.press(true);
         delay(25);
         buttonD.drawButton(false);
