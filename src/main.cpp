@@ -32,11 +32,10 @@ MQTTClient mqttClient;
 
 Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
 
-Adafruit_GFX_Button buttonA;
-Adafruit_GFX_Button buttonB;
-Adafruit_GFX_Button buttonC;
-Adafruit_GFX_Button buttonD;
 
+Adafruit_GFX_Button buttons[32];
+
+int activeScreenNumber = 0;
 
 XPT2046 touch(/*cs=*/ /* 4 */ D2, /*irq=*/ D1);
 
@@ -128,18 +127,37 @@ void mqttMesageReceived(String &topic, String &payload) {
     DesiredTemperature = payload;
   }
 
-  displayStates();
+  if (activeScreenNumber == 0) {
+      displayStates();
+  }
+
 }
 
 void mqttConnect() {
+
+  tft.setCursor(0, 0);
+  tft.fillScreen(ILI9341_BLACK);
+  tft.setTextColor(ILI9341_WHITE); tft.setTextSize(1);
+  tft.println("Connecting to MQTT.");
+  int i = 0;
+
   mqttClient.begin("192.168.1.106", 1883, wifiClient);
   // mqttClient.begin("192.168.1.250", 1883, wifiClient);
-  Serial.print("Connecting to MQTT...");
+  Serial.print("Connecting to MQTT... ");
   displayMqttConnect();
-  while (!mqttClient.connect("arduino", "try", "try")) {
+  while (!mqttClient.connect("Screen01", "try", "try")) {
+
+    if (i++ > 20) {
+      tft.println("Failed. Rebooting.");
+      ESP.restart();
+    }
+
+    tft.print(i);
+    tft.println("...");
     Serial.print(".");
     delay(1000);
   }
+  tft.println("Connected to MQTT");
 }
 
 
@@ -151,31 +169,66 @@ void mqttSetup(){
 
 
 void screenMain() {
+    activeScreenNumber = 0;
     tft.fillScreen(ILI9341_BLACK);
-
     // Replace these for your screen module
     //                        X   Y   W   H    Border           Background    TextC                Text            Font size
-    buttonA.initButton(&tft, 60, 40, 120, 80, ILI9341_DARKCYAN, ILI9341_BLACK, ILI9341_GREENYELLOW, "Temp++", 1);
-    buttonA.drawButton();
+    buttons[0].initButton(&tft, 60, 40, 120, 80, ILI9341_DARKCYAN, ILI9341_BLACK, ILI9341_GREENYELLOW, "Temp++", 1);
+    buttons[0].drawButton();
 
-    buttonB.initButton(&tft, 60, 120, 120, 80, ILI9341_DARKCYAN, ILI9341_BLACK, ILI9341_GREEN, "Temp--", 1);
-    buttonB.drawButton();
+    buttons[1].initButton(&tft, 60, 120, 120, 80, ILI9341_DARKCYAN, ILI9341_BLACK, ILI9341_GREEN, "Temp--", 1);
+    buttons[1].drawButton();
 
-    buttonC.initButton(&tft, 60, 200, 120, 80, ILI9341_DARKCYAN, ILI9341_BLACK, ILI9341_WHITE, "On / Off", 1);
-    buttonC.drawButton();
+    buttons[2].initButton(&tft, 60, 200, 120, 80, ILI9341_DARKCYAN, ILI9341_BLACK, ILI9341_WHITE, "On", 1);
+    buttons[2].drawButton();
 
-    buttonD.initButton(&tft, 120, 280, 240, 80, ILI9341_DARKCYAN, ILI9341_BLACK, ILI9341_WHITE, "Global On / Off", 1);
-    buttonD.drawButton();
+    buttons[3].initButton(&tft, 180, 200, 120, 80, ILI9341_DARKCYAN, ILI9341_BLACK, ILI9341_WHITE, "Off", 1);
+    buttons[3].drawButton();
+
+    buttons[4].initButton(&tft, 120, 280, 240, 80, ILI9341_DARKCYAN, ILI9341_BLACK, ILI9341_WHITE, "Scenes", 1);
+    buttons[4].drawButton();
 
     // tft.drawChar(130, 160, 'Te', ILI9341_CYAN, ILI9341_BLACK, 1);
     displayStates();
 }
 
+void screenScenes() {
+    activeScreenNumber = 1;
+    tft.fillScreen(ILI9341_BLACK);
+    // Replace these for your screen module
+    //                        X   Y   W   H    Border           Background    TextC                Text            Font size
+    buttons[5].initButton(&tft, 60, 40, 120, 80, ILI9341_DARKCYAN, ILI9341_BLACK, ILI9341_GREENYELLOW, "Morning", 1);
+    buttons[5].drawButton();
+
+    buttons[6].initButton(&tft, 180, 40, 120, 80, ILI9341_DARKCYAN, ILI9341_BLACK, ILI9341_GREEN, "Movies", 1);
+    buttons[6].drawButton();
+
+    buttons[7].initButton(&tft, 60, 120, 120, 80, ILI9341_DARKCYAN, ILI9341_BLACK, ILI9341_GREENYELLOW, "Chillin", 1);
+    buttons[7].drawButton();
+
+    buttons[8].initButton(&tft, 180, 120, 120, 80, ILI9341_DARKCYAN, ILI9341_BLACK, ILI9341_GREEN, "Minimal", 1);
+    buttons[8].drawButton();
+
+    buttons[9].initButton(&tft, 60, 200, 120, 80, ILI9341_DARKCYAN, ILI9341_BLACK, ILI9341_GREENYELLOW, "Bureau", 1);
+    buttons[9].drawButton();
+
+    buttons[10].initButton(&tft, 180, 200, 120, 80, ILI9341_DARKCYAN, ILI9341_BLACK, ILI9341_GREEN, "Full", 1);
+    buttons[10].drawButton();
+
+    buttons[11].initButton(&tft, 120, 280, 240, 80, ILI9341_DARKCYAN, ILI9341_BLACK, ILI9341_WHITE, "< Back", 1);
+    buttons[11].drawButton();
+
+    // tft.drawChar(130, 160, 'Te', ILI9341_CYAN, ILI9341_BLACK, 1);
+    // displayStates();
+}
+
+
+
 
 void displayWaitingForWifi(){
   tft.setCursor(0, 0);
   tft.fillScreen(ILI9341_BLACK);
-  tft.setTextColor(ILI9341_WHITE);  tft.setTextSize(1);
+  tft.setTextColor(ILI9341_WHITE); tft.setTextSize(1);
   tft.println("Connecting to WiFi. Worst case, try to set it up again");
 }
 
@@ -200,16 +253,12 @@ void setup() {
   Serial.println("Connected");
   mqttSetup();
   screenMain();
-
-
 }
 
 
 
 static void calibratePoint(uint16_t x, uint16_t y, uint16_t &vi, uint16_t &vj) {
   // Draw cross
-
-
   tft.drawFastHLine(x - 8, y, 16,0xff);
   tft.drawFastVLine(x, y - 8, 16,0xff);
   while (!touch.isTouching()) {
@@ -266,56 +315,68 @@ void loop() {
 
   uint16_t x, y;
   if (touch.isTouching()) {
+
     touch.getPosition(x, y);
     /* Serial.print("x: ");
     Serial.print(x);
     Serial.print(" - y: ");
     Serial.println(y); */
 
-    if(buttonA.contains(x, y)){
-        buttonC.press(true);
-        buttonA.drawButton(true);
-        Serial.println("Temp++");
-        mqttClient.publish("/Screen01/Climate/DesiredTemperatureButton", "++");
-        delay(25);
-        buttonA.drawButton(false);
-        buttonA.press(false);
+    if(activeScreenNumber == 0){
+      if(activeScreenNumber == 0 && buttons[0].contains(x, y)){
+          buttons[0].press(true);
+          buttons[0].drawButton(true);
+          Serial.println("Temp++");
+          mqttClient.publish("/Screen01/Climate/DesiredTemperatureButton", "++");
+          delay(25);
+          buttons[0].drawButton(false);
+          buttons[0].press(false);
+      }
+
+      if(activeScreenNumber == 0 && buttons[1].contains(x, y)){
+          buttons[1].drawButton(true);
+          Serial.println("Temp--");
+          mqttClient.publish("/Screen01/Climate/DesiredTemperatureButton", "--");
+          buttons[1].press(true);
+          delay(25);
+          buttons[1].drawButton(false);
+          buttons[1].press(false);
+      }
+
+      if(activeScreenNumber == 0 && buttons[2].contains(x, y)){
+          buttons[2].drawButton(true);
+          Serial.println("On/Off");
+          mqttClient.publish("/Screen01/Lights/Single/OnOff", "OnOff");
+          buttons[2].press(true);
+          delay(25);
+          buttons[2].drawButton(false);
+          buttons[2].press(false);
+      }
+
+      if(activeScreenNumber == 0 && buttons[3].contains(x, y)){
+          buttons[3].drawButton(true);
+          Serial.println("Global On/Off");
+          mqttClient.publish("/Screen01/Lights/Global/OnOff", "OnOff");
+          buttons[3].press(true);
+          delay(25);
+          buttons[3].drawButton(false);
+          buttons[3].press(false);
+      }
+
+
+      if(activeScreenNumber == 0 && buttons[4].contains(x, y)){
+          screenScenes();
+          return ;
+      }
+    } else if(activeScreenNumber == 1){
+      if (buttons[11].contains(x,y)){
+          screenMain();
+      }
 
     }
 
-    if(buttonB.contains(x, y)){
-        buttonB.drawButton(true);
-        Serial.println("Temp--");
-        mqttClient.publish("/Screen01/Climate/DesiredTemperatureButton", "--");
-        buttonB.press(true);
-        delay(25);
-        buttonB.drawButton(false);
-        buttonB.press(false);
-    }
-
-    if(buttonC.contains(x, y)){
-        buttonC.drawButton(true);
-        Serial.println("On/Off");
-        mqttClient.publish("/Screen01/Lights/Single/OnOff", "OnOff");
-        buttonC.press(true);
-        delay(25);
-        buttonC.drawButton(false);
-        buttonC.press(false);
-    }
-
-    if(buttonD.contains(x, y)){
-        buttonD.drawButton(true);
-        Serial.println("Global On/Off");
-        mqttClient.publish("/Screen01/Lights/Global/OnOff", "OnOff");
-        buttonD.press(true);
-        delay(25);
-        buttonD.drawButton(false);
-        buttonD.press(false);
-    } else {
-      buttonA.press(false);
-      buttonB.press(false);
-      buttonC.press(false);
-      buttonD.press(false);
+    for (int i = 0; i < 32; i++) {
+        buttons[i].press(false);
     }
   }
 
